@@ -2,7 +2,6 @@
 
 <h4 align="center">
   Project status:
-  <img alt="Version" src="https://img.shields.io/badge/dynamic/json?url=https://api.github.com/repos/simplydreamy0/NotBot/releases/latest&label=version&query=$.tag_name&color=blue" />
   <img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/simplydreamy0/NodeBot/build">
   <img alt="GitHub Release" src="https://img.shields.io/github/v/release/simplydreamy0/NodeBot">
 </h4>
