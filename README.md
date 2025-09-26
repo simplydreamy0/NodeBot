@@ -2,7 +2,7 @@
 
 <h4 align="center">
   Project status:
-  <img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/simplydreamy0/NodeBot/build">
+  <img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/simplydreamy0/NodeBot/build.yaml">
   <img alt="GitHub Release" src="https://img.shields.io/github/v/release/simplydreamy0/NodeBot">
 </h4>
 
