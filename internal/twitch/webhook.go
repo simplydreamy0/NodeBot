@@ -8,7 +8,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -71,16 +70,6 @@ func NewTwitchBot(config TwitchConfig) *TwitchBot {
 		userClient: userClient,
 		shoutouts: make(map[string]time.Time),
 	}
-}
-
-func (bot *TwitchBot) StartWebhook() {
-	http.HandleFunc("/", bot.TwitchWebHookHandler)
-	err := http.ListenAndServe(":3333", nil)
-	if err != nil {
-		log.Printf("Couldn't start twitch webhook: %s \n", err)
-		os.Exit(1)
-	}
-	log.Print("Server started")
 }
 
 func (bot *TwitchBot) TwitchWebHookHandler(w http.ResponseWriter, r *http.Request) {

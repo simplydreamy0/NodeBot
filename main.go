@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"gopkg.in/yaml.v3"
 	"log"
 	"os"
-	"runtime"
 	"sync"
+	"net/http"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"nodebot/internal/twitch"
 )
@@ -35,11 +35,17 @@ func main() {
 		log.Fatal("Couldn't initialize twitch bot.")
 	}
 	wg.Go(func() {
-		TwitchBot.StartWebhook()
+		http.Handle("/metrics", promhttp.Handler())
+		http.HandleFunc("/twitch/eventsub", TwitchBot.TwitchWebHookHandler)
+		err := http.ListenAndServe(":3333", nil)
+		if err != nil {
+			log.Printf("Couldn't start HTTP server: %s \n", err)
+			os.Exit(1)
+		}
+		log.Print("Server started")
 	})
 	// start subscription manager
 	TwitchBot.SubscribeToEvents()
-	fmt.Printf("go routines: %v \n", runtime.NumGoroutine())
 	wg.Wait()
 }
 
