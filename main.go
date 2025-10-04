@@ -1,18 +1,21 @@
 package main
 
 import (
-	"gopkg.in/yaml.v3"
 	"log"
+	"net/http"
 	"os"
 	"sync"
-	"net/http"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"gopkg.in/yaml.v3"
+
+	"nodebot/internal/db"
 	"nodebot/internal/twitch"
 )
 
 type Conf struct {
-	TwitchConfig twitch.TwitchConfig `yaml:"twitchConfig"`
+	TwitchConfig 		twitch.TwitchConfig `yaml:"twitchConfig"`
+	DatabaseConfig 	db.DatabaseConfig		`yaml:"database"`
 }
 
 func main() {
@@ -30,10 +33,11 @@ func main() {
 
 	var wg sync.WaitGroup
 	// start twitch webhook handler
-	TwitchBot := twitch.NewTwitchBot(config.TwitchConfig)
+	TwitchBot := twitch.NewTwitchBot(config.TwitchConfig, config.DatabaseConfig)
 	if TwitchBot == nil {
 		log.Fatal("Couldn't initialize twitch bot.")
 	}
+
 	wg.Go(func() {
 		http.Handle("/metrics", promhttp.Handler())
 		http.HandleFunc("/twitch/eventsub", TwitchBot.TwitchWebHookHandler)
