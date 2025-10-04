@@ -56,9 +56,10 @@ func NewTwitchBot(config TwitchConfig) *TwitchBot {
 		return nil
 	}
 	userClient, err := helix.NewClient(&helix.Options{
-		ClientID:       config.ClientID,
-		ClientSecret:   config.ClientSecret,
-		AppAccessToken: config.UserAccessToken,
+		ClientID:       	config.ClientID,
+		ClientSecret:   	config.ClientSecret,
+		UserAccessToken: 	config.UserAccessToken,
+		RefreshToken:			config.UserRefreshToken,
 	})
 	if err != nil {
 		log.Printf("Couldn't initialize twitch bot's API client: %s", err);
