@@ -82,7 +82,10 @@ func (bot TwitchBot) handleChatMessage(event ChatMessageEvent) {
 		return
 	}
 	if _, present := bot.shoutouts[event.Event.ChatterUserID]; !present {
-		bot.shoutout(event.Event.ChatterUserID, event.Event.ChatterUserLogin)
+		bot.shoutout(
+			event.Event.ChatterUserID,
+			fmt.Sprintf("Please take a moment to check out the amazing %s at https://twitch.tv/%s !", event.Event.ChatterUserName, event.Event.ChatterUserLogin),
+		)
 		bot.shoutouts[event.Event.ChatterUserID] = time.Now()
 	} else {
 		lastShoutout := bot.shoutouts[event.Event.ChatterUserID]
@@ -106,7 +109,7 @@ func (bot TwitchBot) handleStreamOnline(event SteamOnlineEvent) {
 	}
 }
 
-func (bot TwitchBot) shoutout(userID, username string) {
+func (bot TwitchBot) shoutout(userID, message string) {
 	var err error
 	answer, err := bot.userClient.SendShoutout(&helix.SendShoutoutParams{
 		FromBroadcasterID: bot.cfg.BroadcasterID,
@@ -114,17 +117,19 @@ func (bot TwitchBot) shoutout(userID, username string) {
 		ModeratorID:       bot.cfg.BotUserID,
 	})
 	log.Printf("answer: %v", answer)
-	if err != nil || (answer.StatusCode < 200 && answer.StatusCode >= 300) {
-		log.Printf("Couldn't send shoutout for user %s: %s", userID, err)
+	if err != nil || (answer.StatusCode >= 400) {
+		log.Printf("%#v", answer)
+		log.Printf("Couldn't send shoutout for user %s: %v", userID, err)
 		return
 	}
+	time.Sleep(1 * time.Second);
 	_, err = bot.appClient.SendChatAnnouncement(&helix.SendChatAnnouncementParams{
 		BroadcasterID: 		bot.cfg.BroadcasterID,
 		ModeratorID:      bot.cfg.BotUserID,
-		Message:       		fmt.Sprintf("Please take a moment to check out the amazing %s at https://twitch.tv/%s !", username, username),
+		Message:       		message,
 	})
 	if err != nil {
-		log.Printf("Couldn't send shoutout message: %s", err)
+		log.Printf("Couldn't send shoutout message: %v", err)
 		return;
 	}
 }
