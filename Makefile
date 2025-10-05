@@ -27,4 +27,4 @@ setup:
 	podman compose up -d
 
 migrate:
-	podman run -v $(PWD)/internal/db/migrations:/migrations --network host migrate/migrate:v4.19.0 -path=/migrations/ -database postgres://postgres:password@localhost:5432/nodebot up
+	podman run -v $(PWD)/internal/db/migrations:/migrations --network host migrate/migrate:v4.19.0 -path=/migrations/ -database postgres://postgres:password@localhost:5432/nodebot?sslmode=disable up
