@@ -26,6 +26,11 @@ type SteamOnlineEvent struct {
 	Event        helix.EventSubStreamOnlineEvent `json:"event"`
 }
 
+type RaidEvent struct {
+	Subscription helix.EventSubSubscription      	`json:"subscription"`
+	Event        helix.EventSubChannelRaidEvent 	`json:"event"`
+}
+
 func (bot TwitchBot) processEvent(subscriptionType string, body []byte) *HTTPError {
 	switch subscriptionType {
 	case helix.EventSubTypeChannelFollow:
@@ -39,6 +44,18 @@ func (bot TwitchBot) processEvent(subscriptionType string, body []byte) *HTTPErr
 			}
 		}
 		handleFollow(parsedBody)
+		return nil
+	case helix.EventSubTypeChannelRaid:
+		var parsedBody RaidEvent
+		ParseErr := json.Unmarshal(body, &parsedBody)
+		if ParseErr != nil {
+			log.Printf("Could not read body: %s\n", ParseErr)
+			return &HTTPError{
+				HTTPStatus: http.StatusBadRequest,
+				Message:    "Couldn't parse follow event as JSON object.",
+			}
+		}
+		bot.handleRaid(parsedBody);
 		return nil
 	case helix.EventSubTypeChannelChatMessage:
 		var parsedBody ChatMessageEvent
@@ -71,6 +88,13 @@ func (bot TwitchBot) processEvent(subscriptionType string, body []byte) *HTTPErr
 			Message:    fmt.Sprintf("Couldn't parse event type: %s \n", subscriptionType),
 		}
 	}
+}
+
+func (bot TwitchBot) handleRaid(event RaidEvent) {
+	bot.shoutout(
+		event.Event.FromBroadcasterUserID,
+		fmt.Sprintf("Please take a moment to check out the amazing %s at https://twitch.tv/%s !", event.Event.FromBroadcasterUserName, event.Event.FromBroadcasterUserLogin),
+	)
 }
 
 func handleFollow(event FollowEvent) {
