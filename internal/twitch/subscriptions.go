@@ -64,4 +64,36 @@ func (bot TwitchBot) SubscribeToEvents() {
 	if err != nil {
 		log.Printf("%v \n", err)
 	}
+	// Subscribe to receiving raids
+	_, err = bot.appClient.CreateEventSubSubscription(&helix.EventSubSubscription{
+		Type:    helix.EventSubTypeChannelRaid,
+		Version: "1",
+		Condition: helix.EventSubCondition{
+			ToBroadcasterUserID: bot.cfg.BroadcasterID,
+		},
+		Transport: helix.EventSubTransport{
+			Method:   "webhook",
+			Callback: bot.cfg.WebhookConfig.Url,
+			Secret:   bot.cfg.WebhookConfig.Secret,
+		},
+	})
+	if err != nil {
+		log.Printf("%v \n", err)
+	}
+	// Subscribe to sending raids
+	_, err = bot.appClient.CreateEventSubSubscription(&helix.EventSubSubscription{
+		Type:    helix.EventSubTypeChannelRaid,
+		Version: "1",
+		Condition: helix.EventSubCondition{
+			FromBroadcasterUserID: bot.cfg.BroadcasterID,
+		},
+		Transport: helix.EventSubTransport{
+			Method:   "webhook",
+			Callback: bot.cfg.WebhookConfig.Url,
+			Secret:   bot.cfg.WebhookConfig.Secret,
+		},
+	})
+	if err != nil {
+		log.Printf("%v \n", err)
+	}
 }
