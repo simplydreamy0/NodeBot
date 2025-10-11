@@ -34,6 +34,7 @@ type TwitchConfig struct {
 	BroadcasterID 		string        `yaml:"broadcasterID"`
 	WebhookConfig 		WebhookConfig `yaml:"webhookConfig"`
 	ShouthoutList 		[]string			`yaml:"shouthoutList"`
+	JoinMessage 			string				`yaml:"joinMessage"`
 }
 
 type WebhookConfig struct {

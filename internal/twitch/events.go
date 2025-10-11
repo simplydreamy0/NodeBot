@@ -125,7 +125,7 @@ func (bot TwitchBot) handleStreamOnline(event SteamOnlineEvent) {
 	_, err = bot.appClient.SendChatMessage(&helix.SendChatMessageParams{
 		BroadcasterID: bot.cfg.BroadcasterID,
 		SenderID:      bot.cfg.BotUserID,
-		Message:       "NodeBot joined the chat ! catArriveDestoy",
+		Message:       bot.cfg.JoinMessage,
 	})
 	if err != nil {
 		log.Printf("Couldn't send shoutout message: %s", err)
