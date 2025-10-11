@@ -90,11 +90,36 @@ func (bot TwitchBot) processEvent(subscriptionType string, body []byte) *HTTPErr
 	}
 }
 
+
+
 func (bot TwitchBot) handleRaid(event RaidEvent) {
-	bot.shoutout(
-		event.Event.FromBroadcasterUserID,
-		fmt.Sprintf("Please take a moment to check out the amazing %s at https://twitch.tv/%s !", event.Event.FromBroadcasterUserName, event.Event.FromBroadcasterUserLogin),
-	)
+	// We recieved a raid
+	if event.Event.FromBroadcasterUserID != bot.cfg.BroadcasterID {
+		bot.shoutout(
+			event.Event.FromBroadcasterUserID,
+			fmt.Sprintf("Please take a moment to check out the amazing %s at https://twitch.tv/%s !", event.Event.FromBroadcasterUserName, event.Event.FromBroadcasterUserLogin),
+		)
+		return;
+	}
+	//We start a raid
+	var err error
+	_, err = bot.appClient.SendChatMessage(&helix.SendChatMessageParams{
+		BroadcasterID: bot.cfg.BroadcasterID,
+		SenderID:      bot.cfg.BotUserID,
+		Message:       bot.cfg.RaidMessage,
+	})
+	if err != nil {
+		log.Printf("Couldnt send raid message: %v\n", err);
+	}
+	time.Sleep(1 * time.Second);
+	_, err = bot.appClient.SendChatMessage(&helix.SendChatMessageParams{
+		BroadcasterID: bot.cfg.BroadcasterID,
+		SenderID:      bot.cfg.BotUserID,
+		Message:       bot.cfg.DiscordMessage,
+	})
+	if err != nil {
+		log.Printf("Couldnt send discord message: %v\n", err);
+	}
 }
 
 func handleFollow(event FollowEvent) {
@@ -140,7 +165,6 @@ func (bot TwitchBot) shoutout(userID, message string) {
 		ToBroadcasterID:   userID,
 		ModeratorID:       bot.cfg.BotUserID,
 	})
-	log.Printf("answer: %v", shoutoutAnswer)
 	if err != nil || (shoutoutAnswer.StatusCode >= 400) {
 		log.Printf("Couldn't send shoutout for user %s, twitch answered: %#v, err: %v", userID, shoutoutAnswer, err);
 		return
