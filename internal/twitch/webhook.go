@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/nicklaw5/helix/v2"
-	"github.com/jackc/pgx/v5"
 
 	"nodebot/internal/db"
 )
@@ -48,7 +48,7 @@ type TwitchBot struct {
 	cfg TwitchConfig
 	appClient *helix.Client
 	userClient *helix.Client
-	dbClient *pgx.Conn
+	dbClientPool *pgxpool.Pool
 	shoutouts map[string]time.Time
 }
 
@@ -73,9 +73,14 @@ appClient, err := helix.NewClient(&helix.Options{
 		log.Printf("Couldn't initialize twitch bot's API client: %s", err);
 		return nil
 	}
-	pgConn, err := pgx.Connect(context.Background(), db.GenerateConnString(dbConfig))
+	pgPool, err := pgxpool.New(context.Background(), db.GenerateConnString(dbConfig))
 	if err != nil {
-		log.Printf("Unable to connect to database: %s\n", err);
+		log.Printf("Unable to create pg pool: %s\n", err);
+		return nil
+	}
+	_, err = pgPool.Acquire(context.Background())
+	if err != nil {
+		log.Printf("Unable to connect do database: %s\n", err);
 		return nil
 	}
 
@@ -83,7 +88,7 @@ appClient, err := helix.NewClient(&helix.Options{
 		cfg: twitchConfig,
 		appClient: appClient,
 		userClient: userClient,
-		dbClient: pgConn,
+		dbClientPool: pgPool,
 		shoutouts: make(map[string]time.Time),
 	}
 }
@@ -104,7 +109,7 @@ func (bot *TwitchBot) TwitchWebHookHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Verify this is not a duplicate event
-	commandTag, err := bot.dbClient.Exec(context.Background(), "SELECT id FROM twitch_notifications WHERE id=$1", r.Header.Get("Twitch-Eventsub-Message-Id"))
+	commandTag, err := bot.dbClientPool.Exec(context.Background(), "SELECT id FROM twitch_notifications WHERE id=$1", r.Header.Get("Twitch-Eventsub-Message-Id"))
 	if err != nil {
 	  log.Printf("Error checking db for processed events: %s", err)
 	}
@@ -145,8 +150,8 @@ func (bot *TwitchBot) TwitchWebHookHandler(w http.ResponseWriter, r *http.Reques
 }
 
 func (bot *TwitchBot) storeEventID(eventID string) {
-	err := pgx.BeginFunc(context.Background(), bot.dbClient, func(tx pgx.Tx) error {
-    _, err := tx.Exec(context.Background(), "INSERT INTO twitch_notifications VALUES ($1, transaction_timestamp())", eventID)
+	err := bot.dbClientPool.AcquireFunc(context.Background(), func(conn *pgxpool.Conn) error {
+    _, err := conn.Exec(context.Background(), "INSERT INTO twitch_notifications VALUES ($1, transaction_timestamp())", eventID)
     return err
 	})
 	if err != nil {
